@@ -1,6 +1,6 @@
 import React, { Component } from 'react';
 import moment from 'moment'
-import ReactHighcharts from 'react-highcharts/ReactHighstock';
+import ReactHighcharts from 'react-highcharts';
 import logo from './logo.svg';
 import './App.css';
 const data = [{ x: 100, y: 200 }, { x: 120, y: 100 },
@@ -157,16 +157,16 @@ class App extends Component {
         min: 0
       },
 
+      plotOptions: {
+
+      },
+
       events: {
         click: function () {
           alert('Category: ' + this.category + ', value: ' + this.y);
         }
       },
       colors: ['#70bf44', '#ec4047', '#f68b37', '#036', '#000'],
-
-      // Define the data points. All series have a dummy year
-      // of 1970/71 in order to be compared on the same x axis. Note
-      // that in JavaScript, months start at 0 for January, 1 for February etc.
       series: [{
         name: "Pass",
         data: this.state.pass,
