@@ -1,8 +1,11 @@
 
 To run this project
-Go to server folder
-run npm install
-To start server run npm start
+Go to 
+## server folder
+run 
+### npm install
+To start server run 
+### npm start
 
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
