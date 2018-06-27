@@ -1,11 +1,12 @@
 import React, { Component } from 'react';
-import moment from 'moment'
 import ReactHighcharts from 'react-highcharts';
-import logo from './logo.svg';
+import axios from 'axios';
+import moment from 'moment';
+import DayPickerInput from 'react-day-picker/DayPickerInput';
+import { formatDate, parseDate } from 'react-day-picker/moment';
+import 'react-day-picker/lib/style.css';
+
 import './App.css';
-const data = [{ x: 100, y: 200 }, { x: 120, y: 100 },
-{ x: 170, y: 300 }, { x: 140, y: 250 },
-{ x: 150, y: 400 }, { x: 110, y: 280 }]
 const plotpoints = [
   // [
   //   new Date("2017-11-29T04:56:12Z").getTime(),
@@ -17,24 +18,10 @@ const plotpoints = [
 
   //   205,
   // ],
-  // [
-  //   new Date("2017-11-02T02:24:12Z").getTime(),
-
-  //   20,
-  // ],
   [
-    new Date("2017-11-08T05:24:12Z").getTime(),
+    new Date("2018-11-02T02:24:12Z").getTime(),
 
-    90, 'pass'
-  ],
-  [
-    new Date("2017-11-18T06:24:12Z").getTime(),
-    90, 'fail'
-  ],
-  [
-    new Date("2017-11-10T14:12:12Z").getTime(),
-
-    200, 'error'
+    20,
   ],
   [1401580800000, 5.1, 'pass'],
   [1401667200000, 6.6, 'error'],
@@ -98,8 +85,6 @@ const plotpoints = [
   [1406592000000, 16.0, 'pass'],
   [1406678400000, 14.4, 'pass'],
   [1406764800000, 12.8, 'pass'],
-
-
 ];
 
 
@@ -109,28 +94,87 @@ class App extends Component {
     this.state = {
       fail: [],
       pass: [],
-      error: []
+      error: [],
+      from: undefined,
+      to: undefined,
     }
+    this.handleFromChange = this.handleFromChange.bind(this);
+    this.handleToChange = this.handleToChange.bind(this);
+    this.checkdate = this.checkdate.bind(this);
   }
 
   componentDidMount() {
     const fail = [];
     const pass = [];
     const error = [];
-    plotpoints.map((data) => {
-      if (data[2] == 'pass') {
-        pass.push(data)
-      } else if (data[2] == 'fail') {
-        fail.push(data)
-      } else {
-        error.push(data)
-      }
-    })
-    this.setState({ pass, error, fail })
+    axios.post('http://localhost:3030/getFullData').then(
+      function (response, err) {
+        let plotpoint = response.data;
+        plotpoint.map((data) => {
+          if (data[2] == 'pass') {
+            pass.push(data)
+          } else if (data[2] == 'fail') {
+            fail.push(data)
+          } else {
+            error.push(data)
+          }
+        })
+        this.setState({ pass, error, fail })
+      }.bind(this)
+    );
+
+  }
+  focusTo() {
+    this.timeout = setTimeout(() => this.to.getInput().focus(), 0);
+  }
+  showFromMonth() {
+    const { from, to } = this.state;
+    if (!from) {
+      return;
+    }
+    if (moment(to).diff(moment(from), 'months') < 2) {
+      this.to.getDayPicker().showMonth(from);
+    }
+  }
+  handleFromChange(from) {
+    const { to } = this.state;
+    this.setState({ from });
+    this.checkdate(from, to);
+  }
+  handleToChange(to) {
+    const { from } = this.state;
+    this.setState({ to }, this.showFromMonth);
+    this.checkdate(from, to);
+  }
+  checkdate(from, to) {
+    console.log(from, to)
+    const fail = [];
+    const pass = [];
+    const error = [];
+    axios.post('http://localhost:3030/getDataWithDate', { from: from, to: to }).then(
+      function (response, err) {
+        let plotpoint = response.data;
+        console.log(response)
+        plotpoint.map((data) => {
+          if (data[2] == 'pass') {
+            pass.push(data)
+          } else if (data[2] == 'fail') {
+            fail.push(data)
+          } else {
+            error.push(data)
+          }
+        })
+        this.setState({ pass, error, fail })
+      }.bind(this)
+    );
+  }
+  reset() {
+    alert('reset')
   }
   render() {
-    console.log(this.state.pass, 'here pass')
-
+    console.log(moment(new Date(1402358400000)).format("DD-MM-YYYY"));
+    const { from, to } = this.state;
+    const modifiers = { start: from, end: to };
     const config = {
       chart: {
         type: 'scatter',
@@ -158,12 +202,27 @@ class App extends Component {
       },
 
       plotOptions: {
-
-      },
-
-      events: {
-        click: function () {
-          alert('Category: ' + this.category + ', value: ' + this.y);
+        scatter: {
+          marker: {
+            radius: 5,
+            states: {
+              hover: {
+                enabled: true,
+                lineColor: 'rgb(100,100,100)'
+              }
+            }
+          },
+          states: {
+            hover: {
+              marker: {
+                enabled: true
+              }
+            }
+          },
+          tooltip: {
+            headerFormat: '<b>{series.name}</b><br>',
+            pointFormat: '{point.y} sec'
+          }
         }
       },
       colors: ['#70bf44', '#ec4047', '#f68b37', '#036', '#000'],
@@ -172,7 +231,7 @@ class App extends Component {
         data: this.state.pass,
         events: {
           click: function (d) {
-            console.log('Category: ', d.point.color);
+            // console.log('Category: ', d.point.color);
             if (d.point.color === '#70bf44') {
               d.point.color = '#000';
             } else {
@@ -185,7 +244,7 @@ class App extends Component {
         data: this.state.fail,
         events: {
           click: function (d) {
-            console.log('Category: ', d.point.color);
+            // console.log('Category: ', d.point.color);
             if (d.point.color === '#ec4047') {
               d.point.color = '#000';
             } else {
@@ -198,7 +257,7 @@ class App extends Component {
         data: this.state.error,
         events: {
           click: function (d) {
-            console.log('Category: ', d.point.color);
+            // console.log('Category: ', d.point.color);
             if (d.point.color === '#f68b37') {
               d.point.color = '#000';
             } else {
@@ -207,10 +266,47 @@ class App extends Component {
           }
         }
       }]
-
     };
     return (
       <div className='App'>
+        <DayPickerInput
+          value={from}
+          placeholder="From"
+          format="LL"
+          formatDate={formatDate}
+          parseDate={parseDate}
+          dayPickerProps={{
+            selectedDays: [from, { from, to }],
+            disabledDays: { after: to },
+            toMonth: to,
+            modifiers,
+            numberOfMonths: 2,
+            onDayClick: () => this.to.getInput().focus(),
+          }}
+          onDayChange={this.handleFromChange}
+        />{' '}
+        —{' '}
+        <span className="InputFromTo-to">
+          <DayPickerInput
+            ref={el => (this.to = el)}
+            value={to}
+            placeholder="To"
+            format="LL"
+            formatDate={formatDate}
+            parseDate={parseDate}
+            dayPickerProps={{
+              selectedDays: [from, { from, to }],
+              disabledDays: { before: from },
+              modifiers,
+              month: from,
+              fromMonth: from,
+              numberOfMonths: 2,
+            }}
+            onDayChange={this.handleToChange}
+          />
+        </span>
+        <button
+          onClick={() => this.reset()}>Reset Filter</button>
         <ReactHighcharts config={config}></ReactHighcharts>
       </div>
     )
