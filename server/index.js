@@ -12,9 +12,6 @@ app.use(cors());
 app.use(bodyParser());
 app.use("/static", express.static("./build/static"));
 app.set("view engine", "jade");
-
-// app.use(express.static(path.join(__dirname, "build")));
-
 app.use(function (req, res, next) {
   res.header('Access-Control-Allow-Origin', '*');
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE');
