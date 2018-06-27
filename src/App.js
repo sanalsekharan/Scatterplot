@@ -101,27 +101,12 @@ class App extends Component {
     this.handleFromChange = this.handleFromChange.bind(this);
     this.handleToChange = this.handleToChange.bind(this);
     this.checkdate = this.checkdate.bind(this);
+    this.getData = this.getData.bind(this);
+    this.setData = this.setData.bind(this);
   }
 
   componentDidMount() {
-    const fail = [];
-    const pass = [];
-    const error = [];
-    axios.post('http://localhost:3030/getFullData').then(
-      function (response, err) {
-        let plotpoint = response.data;
-        plotpoint.map((data) => {
-          if (data[2] == 'pass') {
-            pass.push(data)
-          } else if (data[2] == 'fail') {
-            fail.push(data)
-          } else {
-            error.push(data)
-          }
-        })
-        this.setState({ pass, error, fail })
-      }.bind(this)
-    );
+    this.getData()
 
   }
   focusTo() {
@@ -148,28 +133,47 @@ class App extends Component {
   }
   checkdate(from, to) {
     console.log(from, to)
-    const fail = [];
-    const pass = [];
-    const error = [];
+
     axios.post('http://localhost:3030/getDataWithDate', { from: from, to: to }).then(
       function (response, err) {
         let plotpoint = response.data;
-        console.log(response)
-        plotpoint.map((data) => {
-          if (data[2] == 'pass') {
-            pass.push(data)
-          } else if (data[2] == 'fail') {
-            fail.push(data)
-          } else {
-            error.push(data)
-          }
-        })
-        this.setState({ pass, error, fail })
+        this.setData(plotpoint);
+      }.bind(this)
+    );
+  }
+  setData(plotpoint) {
+    const fail = [];
+    const pass = [];
+    const error = [];
+    plotpoint.map((data) => {
+      if (data[2] == 'pass') {
+        pass.push(data)
+      } else if (data[2] == 'fail') {
+        fail.push(data)
+      } else {
+        error.push(data)
+      }
+    })
+    this.setState({ pass, error, fail })
+  }
+  getData() {
+    const fail = [];
+    const pass = [];
+    const error = [];
+    axios.post('http://localhost:3030/getFullData').then(
+      function (response, err) {
+        let plotpoint = response.data;
+        this.setData(plotpoint);
+
       }.bind(this)
     );
   }
   reset() {
-    alert('reset')
+    this.getData()
+    this.setState({
+      from: undefined,
+      to: undefined
+    })
   }
   render() {
     console.log(moment(new Date(1402358400000)).format("DD-MM-YYYY"));
@@ -280,7 +284,7 @@ class App extends Component {
             disabledDays: { after: to },
             toMonth: to,
             modifiers,
-            numberOfMonths: 2,
+            numberOfMonths: 1,
             onDayClick: () => this.to.getInput().focus(),
           }}
           onDayChange={this.handleFromChange}
@@ -300,7 +304,7 @@ class App extends Component {
               modifiers,
               month: from,
               fromMonth: from,
-              numberOfMonths: 2,
+              numberOfMonths: 1,
             }}
             onDayChange={this.handleToChange}
           />
