@@ -6,6 +6,7 @@ run
 ### npm install
 To start server run 
 ### npm start
+#  App will running at http://127.0.0.1:3030/
 
 This project was bootstrapped with [Create React App](https://github.com/facebookincubator/create-react-app).
 
